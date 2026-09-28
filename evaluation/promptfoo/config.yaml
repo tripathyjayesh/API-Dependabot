@@ -1,0 +1,82 @@
+description: "API Dependabot shared-case comparison: Vanilla RAG vs ReAct"
+prompts:
+  - "Answer this migration question using evidence from the supplied API and Java repository: {{question}}"
+providers:
+  - id: file://provider.mjs
+    label: Vanilla RAG
+    config:
+      mode: vanilla-rag
+  - id: file://provider.mjs
+    label: ReAct
+    config:
+      mode: react
+      timeoutMs: 180000
+defaultTest:
+  assert:
+    - type: javascript
+      value: output.includes(context.vars.expectedSymbol)
+    - type: llm-rubric
+      value: >-
+        Answer the migration question accurately and distinguish facts supported by
+        repository/API evidence from uncertainty. Cite or clearly identify relevant
+        evidence. Compare the answer with the case reference: {{expectedAssessment}}.
+        Do not claim that this sample repository calls or deserializes an endpoint unless
+        its code supports that claim. Score 1 for a correct, grounded answer, 0.5 for a
+        useful but incomplete answer, and 0 for a materially incorrect or unsupported
+        answer.
+      threshold: 0.7
+tests:
+  - description: removed response property name consumer impact
+    vars:
+      caseId: removed-response-name-001
+      oldSpec: src/test/resources/specs/v1.yaml
+      newSpec: src/test/resources/specs/v2-removed-response-property.yaml
+      repository: src/test/resources/consumer-project
+      question: Where does the Java consumer read the removed widget name?
+      expectedSymbol: getName()
+      expectedAssessment: The response property name was removed from GET /widgets/{id}; the sample Java service calls Widget.getName(), but the sample does not show HTTP deserialization.
+  - description: removed GET operation impact
+    vars:
+      caseId: removed-operation-001
+      oldSpec: src/test/resources/specs/v1.yaml
+      newSpec: src/test/resources/specs/v2-removed-operation.yaml
+      repository: src/test/resources/consumer-project
+      question: Which API operation was removed, and what should a Java consumer check?
+      expectedSymbol: /widgets/{id}
+      expectedAssessment: GET /widgets/{id} was removed and is a breaking contract change; callers of that operation need review.
+  - description: added POST operation compatibility
+    vars:
+      caseId: added-operation-001
+      oldSpec: src/test/resources/specs/v1.yaml
+      newSpec: src/test/resources/specs/v2-added-operation.yaml
+      repository: src/test/resources/consumer-project
+      question: Does adding POST /widgets break existing consumers?
+      expectedSymbol: POST /widgets
+      expectedAssessment: Adding POST /widgets is generally backward compatible for existing consumers, though consumers may adopt the new operation.
+  - description: newly required request property
+    vars:
+      caseId: required-request-field-001
+      oldSpec: src/test/resources/specs/v1-with-create.yaml
+      newSpec: src/test/resources/specs/v2-required-request-field.yaml
+      repository: src/test/resources/consumer-project
+      question: What must existing clients change when creating a widget?
+      expectedSymbol: category
+      expectedAssessment: The POST /widgets request now requires category, so existing create clients must include it; the sample repository does not demonstrate a create request.
+  - description: renamed path parameter review
+    vars:
+      caseId: renamed-path-parameter-001
+      oldSpec: src/test/resources/specs/v1.yaml
+      newSpec: src/test/resources/specs/v2-renamed-path-parameter.yaml
+      repository: src/test/resources/consumer-project
+      question: What changed in the widget lookup path, and what should a generated client maintainer review?
+      expectedSymbol: widgetId
+      expectedAssessment: The path parameter changed from id to widgetId; the diff tool may normalize this, so generated-client bindings warrant review.
+  - description: Stripe Basil to Clover consumer migration
+    vars:
+      caseId: stripe-basil-clover-consumer-001
+      oldSpec: test-projects/stripe-consumer/openapi/basil.yaml
+      newSpec: test-projects/stripe-consumer/openapi/clover.yaml
+      repository: test-projects/stripe-consumer
+      question: We are upgrading this Stripe consumer from 2025-08-27.basil to 2025-09-30.clover. Which existing request and response fields need migration, and what should we check about the new subscription billing default?
+      expectedSymbol: currency_conversion
+      expectedAssessment: Existing request migrations include phases[].iterations to phases[].duration and top-level promotion-code coupon to promotion.type/promotion.coupon. Subscription Discount responses replace discounts[].coupon with discounts[].source, and Checkout Session removes currency_conversion while retaining currency. New subscriptions default to flexible billing; integrations requiring classic billing should explicitly request it. Identify the five unchanged control endpoints as unaffected only if evidence supports it.

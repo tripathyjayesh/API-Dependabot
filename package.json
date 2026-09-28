@@ -1,0 +1,14 @@
+{
+  "name": "api-dependabot-evaluation",
+  "private": true,
+  "engines": {
+    "node": ">=22.22.0"
+  },
+  "scripts": {
+    "eval": "promptfoo eval -c evaluation/promptfoo/config.yaml --no-cache --output evaluation/promptfoo/results.json",
+    "eval:summary": "node evaluation/promptfoo/summarize-results.mjs"
+  },
+  "devDependencies": {
+    "promptfoo": "^0.123.1"
+  }
+}

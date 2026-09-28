@@ -1,0 +1,112 @@
+openapi: 3.0.3
+info:
+  title: Stripe consumer test fixture (Basil baseline)
+  version: 2025-08-27.basil
+  description: Curated contract excerpts for five Clover-affected operations and five controls; not a complete Stripe schema.
+servers: [{url: https://api.stripe.com/v1}]
+paths:
+  /subscription_schedules:
+    post:
+      operationId: createSubscriptionSchedule
+      summary: Create schedule (Basil uses iterations)
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                phases:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      iterations: {type: integer}
+                      items: {type: array, items: {type: object, properties: {price: {type: string}}}}
+      responses:
+        '200': {description: Schedule created}
+  /promotion_codes:
+    post:
+      operationId: createPromotionCode
+      summary: Create promotion code (Basil top-level coupon)
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {coupon: {type: string}}
+      responses:
+        '200': {description: Promotion code created}
+  /subscriptions/{id}:
+    get:
+      operationId: retrieveSubscription
+      parameters: [{name: id, in: path, required: true, schema: {type: string}}]
+      responses:
+        '200':
+          description: Subscription with expanded discount coupon
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: {type: string}
+                  discounts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: {type: string}
+                        coupon: {type: object, properties: {id: {type: string}, name: {type: string}}}
+  /checkout/sessions/{id}:
+    get:
+      operationId: retrieveCheckoutSession
+      parameters: [{name: id, in: path, required: true, schema: {type: string}}]
+      responses:
+        '200':
+          description: Checkout Session
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: {type: string}
+                  currency: {type: string}
+                  currency_conversion: {type: object, properties: {amount: {type: integer}, source_currency: {type: string}}}
+  /subscriptions:
+    post:
+      operationId: createSubscription
+      summary: Create subscription with Basil classic billing default
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {customer: {type: string}, price: {type: string}}
+      responses:
+        '200': {description: Subscription created; billing_mode defaults to classic in this fixture}
+  /customers/{id}:
+    get:
+      operationId: retrieveCustomer
+      parameters: [{name: id, in: path, required: true, schema: {type: string}}]
+      responses: {'200': {description: Customer}}
+  /products/{id}:
+    get:
+      operationId: retrieveProduct
+      parameters: [{name: id, in: path, required: true, schema: {type: string}}]
+      responses: {'200': {description: Product}}
+  /coupons/{id}:
+    get:
+      operationId: retrieveCoupon
+      parameters: [{name: id, in: path, required: true, schema: {type: string}}]
+      responses: {'200': {description: Coupon}}
+  /files/{id}:
+    get:
+      operationId: retrieveFile
+      parameters: [{name: id, in: path, required: true, schema: {type: string}}]
+      responses: {'200': {description: File}}
+  /prices/{id}:
+    get:
+      operationId: retrievePrice
+      parameters: [{name: id, in: path, required: true, schema: {type: string}}]
+      responses: {'200': {description: Price}}

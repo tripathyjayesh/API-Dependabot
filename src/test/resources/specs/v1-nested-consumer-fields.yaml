@@ -1,0 +1,45 @@
+openapi: 3.0.3
+info: {title: Nested consumer fields, version: v1}
+paths:
+  /subscription_schedules:
+    post:
+      operationId: createSchedule
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                phases:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      iterations: {type: integer}
+                      price: {type: string}
+      responses:
+        '200': {description: created}
+  /subscriptions/{id}:
+    get:
+      operationId: retrieveSubscription
+      parameters: [{name: id, in: path, required: true, schema: {type: string}}]
+      responses:
+        '200':
+          description: subscription
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: {type: string}
+                  discounts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: {type: string}
+                        coupon:
+                          type: object
+                          properties:
+                            id: {type: string}
+                            name: {type: string}

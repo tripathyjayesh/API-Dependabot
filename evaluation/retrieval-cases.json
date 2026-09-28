@@ -1,0 +1,19 @@
+[
+  {
+    "caseId": "removed-response-name-001",
+    "split": "development",
+    "question": "Where does the Java consumer read the widget name?",
+    "contractEvidence": "Removed response property name from GET /widgets/{id}.",
+    "repository": "src/test/resources/consumer-project",
+    "goldEvidence": [
+      {
+        "source": "src/main/java/demo/WidgetService.java",
+        "lineContains": "widget.getName()"
+      },
+      {
+        "source": "src/test/java/demo/WidgetServiceTest.java",
+        "lineContains": "widget.getName()"
+      }
+    ]
+  }
+]

@@ -1,0 +1,515 @@
+PS C:\Users\Jayesh Tripathi\Documents\Codex\2026-09-24\referenced-chatgpt-conversation-this-is-an\test-projects\stripe-consumer> .\run-dependabot.ps1 -TargetVersion 2025-09-30.clover
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-09-28T04:17:29.813+05:30  INFO 38296 --- [           main] o.a.ApiDependabotApplication             : Starting ApiDependabotApplication v0.1.0-SNAPSHOT using Java 21.0.4 with PID 38296 (C:\Users\Jayesh Tripathi\Documents\Codex\2026-09-24\referenced-chatgpt-conversation-this-is-an\target\api-dependabot-0.1.0-SNAPSHOT.jar started by Jayesh Tripathi in C:\Users\Jayesh Tripathi\Documents\Codex\2026-09-24\referenced-chatgpt-conversation-this-is-an)
+2026-09-28T04:17:29.821+05:30  INFO 38296 --- [           main] o.a.ApiDependabotApplication             : No active profile set, falling back to 1 default profile: "default"
+2026-09-28T04:17:33.675+05:30  INFO 38296 --- [           main] o.a.ApiDependabotApplication             : Started ApiDependabotApplication in 5.118 seconds (process running for 6.742)
+### Stripe consumer test fixture (Clover target) (v 2025-09-30.clover)
+---
+
+#### What's Changed
+---
+
+##### `POST` /subscription_schedules
+
+> Create schedule (Clover uses duration)
+
+
+###### Request:
+
+Changed content type : `application/x-www-form-urlencoded`
+
+* Changed property `phases` (array)
+
+    Changed items (object):
+
+    * Added property `duration` (object)
+
+        * Property `interval` (string)
+
+        * Property `interval_count` (integer)
+
+    * Deleted property `iterations` (integer)
+
+##### `POST` /promotion_codes
+
+> Create promotion code (Clover polymorphic promotion)
+
+
+###### Request:
+
+Changed content type : `application/x-www-form-urlencoded`
+
+* Added property `promotion` (object)
+
+    * Property `type` (string)
+
+        Enum value:
+
+        * `coupon`
+    * Property `coupon` (string)
+
+* Deleted property `coupon` (string)
+
+##### `GET` /subscriptions/{id}
+
+
+###### Return Type:
+
+Changed response : **200 OK**
+> Discount with source; coupon is not auto-expanded
+
+
+* Changed content type : `application/json`
+
+    * Changed property `discounts` (array)
+
+        Changed items (object):
+
+        * Added property `source` (object)
+
+            * Property `type` (string)
+
+            * Property `coupon` (string)
+
+        * Deleted property `coupon` (object)
+
+##### `GET` /checkout/sessions/{id}
+
+
+###### Return Type:
+
+Changed response : **200 OK**
+> Checkout Session; currency_conversion removed
+
+
+* Changed content type : `application/json`
+
+    * Added property `currency` (string)
+
+    * Deleted property `currency_conversion` (object)
+
+##### `POST` /subscriptions
+
+> Create subscription; flexible billing is now the default
+
+
+###### Request:
+
+Changed content type : `application/x-www-form-urlencoded`
+
+* Added property `billing_mode` (object)
+    > Explicitly select flexible or classic; default is now flexible
+
+
+###### Return Type:
+
+Changed response : **200 OK**
+> Subscription created with flexible default billing mode
+
+#### Result
+---
+
+API changes are backward compatible
+
+
+#### Potential consumer impact (review required)
+
+- GET /checkout/sessions/{id} response 200 application/json: removed response properties [currency_conversion]; review consumer references (the diff library may still classify this as backward compatible).
+
+### Lexical retrieval evidence
+
+1. **documentation** ? `README.md:21-37` (score 5.336)
+
+```text
+## Run API Dependabot for a target version
+
+Build the main API Dependabot JAR once from the root directory. Then from this fixture directory:
+
+```powershell
+./run-dependabot.ps1 -TargetVersion 2025-09-30.clover
+```
+
+The target version is explicit and maps to a checked-in contract snapshot. The script passes Basil as the old contract, Clover as the new contract, the Java consumer source, and a migration question to the existing Dependabot CLI. This default run performs deterministic diff/source retrieval only and makes no model call.
+
+For an evidence-cited live Vanilla RAG answer, after setting the model environment variables described in the root README, add `-LiveAnswer`. That makes a billable model request. The user question can be supplied with `-Question '...'`.
+
+## Upgrade the consumer
+
+The checked-in Java controller is deliberately the Basil consumer: it reads `iterations`, top-level promotion-code `coupon`, expanded `Discount.coupon`, Checkout Session `currencyConversion`, and assumes the Basil classic billing default. After capturing Dependabot's findings, migrate those call sites to `duration`, `promotion.type` plus `promotion.coupon`, `Discount.source`, no `currency_conversion` read, and explicit `billing_mode.type=classic` if classic semantics are required. Then update local response/request records and tests to Clover shapes.
+
+OpenAPI tells Dependabot about structural request/response changes; [the local release notes](docs/stripe-release-notes.md) provide documentation evidence for behavior/default semantics that schema diff cannot determine on its own.
+```
+
+2. **java-source** ? `src/main/java/demo/stripe/StripeBillingController.java:1-25` (score 4.543)
+
+```text
+package demo.stripe;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import java.util.Map;
+
+/** Local fixtures shaped around Stripe API resources; no Stripe credentials or network calls. */
+@RestController
+@RequestMapping("/consumer/stripe")
+public class StripeBillingController {
+    // Affected 1: Clover replaces phases[].iterations with phases[].duration.
+    @PostMapping("/subscription-schedules")
+    public Map<String, Object> createSchedule(@RequestBody ScheduleRequest request) {
+        int totalIterations = request.phases().stream().mapToInt(SchedulePhase::iterations).sum();
+        return Map.of("id", "sub_sched_demo", "total_iterations", totalIterations);
+    }
+
+    // Affected 2: Clover replaces PromotionCode.coupon with promotion.type/coupon.
+    @PostMapping("/promotion-codes")
+    public Map<String, Object> createPromotionCode(@RequestBody PromotionCodeRequest request) {
+        return Map.of("id", "promo_demo", "coupon", request.coupon());
+    }
+
+    // Affected 3: Basil consumer expects an expanded Discount.coupon response.
+```
+
+3. **java-source** ? `src/main/java/demo/stripe/StripeBillingController.java:21-45` (score 3.893)
+
+```text
+public Map<String, Object> createPromotionCode(@RequestBody PromotionCodeRequest request) {
+        return Map.of("id", "promo_demo", "coupon", request.coupon());
+    }
+
+    // Affected 3: Basil consumer expects an expanded Discount.coupon response.
+    @GetMapping("/subscriptions/{id}")
+    public SubscriptionDiscountResponse getSubscription(@PathVariable String id) {
+        return new SubscriptionDiscountResponse(id,
+                List.of(new DiscountResponse("di_demo", new Coupon("coupon_demo", "Spring offer"))));
+    }
+
+    // Affected 4: Clover removes Checkout Session.currency_conversion.
+    @GetMapping("/checkout-sessions/{id}")
+    public CheckoutSessionResponse getCheckoutSession(@PathVariable String id) {
+        return new CheckoutSessionResponse(id, "usd", Map.of("amount", 1200, "source_currency", "eur"));
+    }
+
+    // Affected 5: Clover's flexible billing default changes subscription behavior.
+    @PostMapping("/subscriptions")
+    public Map<String, Object> createSubscription(@RequestBody SubscriptionRequest request) {
+        return Map.of("id", "sub_demo", "customer", request.customer(),
+                "billing_mode", "classic (assumed by this Basil-era consumer)");
+    }
+
+    public record ScheduleRequest(String customer, List<SchedulePhase> phases) {}
+```
+
+4. **documentation** ? `README.md:1-25` (score 3.836)
+
+```text
+# Stripe consumer migration fixture
+
+This is a separate Spring Boot Java 21 consumer fixture for testing the main API Dependabot project. It models selected Stripe API behavior using local mock controllers; it makes no Stripe network calls and needs no Stripe secret key.
+
+The baseline is `2025-08-27.basil`; the migration target is `2025-09-30.clover`. See [the release evidence and the exact five affected/five control operations](docs/stripe-release-notes.md). Both API snapshots are curated OpenAPI 3.0 excerpts rather than complete Stripe specifications.
+
+## Run the fixture
+
+From this directory, run the Spring Boot tests and then start the local server. These commands use the repository's bundled Maven and a separate local dependency cache:
+
+```powershell
+$root = (Resolve-Path '../..').Path
+$mvn = Join-Path $root 'work/apache-maven-3.9.11/bin/mvn.cmd'
+$mavenRepo = Join-Path $root 'work/.m2/stripe-consumer-repository'
+& $mvn "-Dmaven.repo.local=$mavenRepo" "-Dmaven.compiler.fork=true" -f "$PWD/pom.xml" test
+& $mvn "-Dmaven.repo.local=$mavenRepo" "-Dmaven.compiler.fork=true" -f "$PWD/pom.xml" spring-boot:run
+```
+
+If Maven is installed globally, use `mvn test` and `mvn spring-boot:run`. Controller routes are under `/consumer/stripe`, for example `GET /consumer/stripe/customers/cus_demo`.
+
+## Run API Dependabot for a target version
+
+Build the main API Dependabot JAR once from the root directory. Then from this fixture directory:
+
+```powershell
+```
+
+5. **documentation** ? `src/README.md:1-9` (score 1.667)
+
+```text
+# Stripe migration notes (local knowledge base)
+
+Target API version: `2025-09-30.clover`. Baseline: `2025-08-27.basil`.
+
+For Clover, change subscription schedule `phases[].iterations` to `phases[].duration`. For promotion code creation, replace the top-level `coupon` parameter with `promotion.type=coupon` and `promotion.coupon`. Discount responses no longer auto-expand `coupon`; use the new `source` property and retrieve/expand its coupon as needed. Checkout Session responses no longer contain `currency_conversion`. New subscriptions default to flexible billing; integrations that need classic behavior should explicitly pass `billing_mode.type=classic`.
+
+Control endpoints in this test: retrieve Customer, Product, Coupon, File, and Price. The selected changelog entries do not change these operations.
+
+Stripe docs: https://docs.stripe.com/changelog/clover/2025-09-30/polymorphic-coupon ; https://docs.stripe.com/changelog/clover/2025-09-30/add-discount-source-property ; https://docs.stripe.com/changelog/clover/2025-09-30/itemize-proration-discount-amounts
+```
+
+6. **java-test** ? `src/test/java/demo/stripe/StripeBillingControllerTest.java:41-65` (score 0.991)
+
+```text
+}
+
+    @Test
+    void basilPromotionCodeRequestStillUsesTopLevelCoupon() throws Exception {
+        mvc.perform(post("/consumer/stripe/promotion-codes").contentType(APPLICATION_JSON)
+                        .content("{\"coupon\":\"coupon_demo\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.coupon").value("coupon_demo"));
+    }
+
+    @Test
+    void basilConsumerShapeIncludesExpandedDiscountCoupon() throws Exception {
+        mvc.perform(get("/consumer/stripe/subscriptions/sub_demo"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.discounts[0].coupon.name").value("Spring offer"));
+    }
+
+    @Test
+    void basilCheckoutResponseIncludesCurrencyConversion() throws Exception {
+        mvc.perform(get("/consumer/stripe/checkout-sessions/cs_demo"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.currency_conversion.amount").value(1200));
+    }
+
+    @Test
+    void basilConsumerAssumesClassicSubscriptionBilling() throws Exception {
+        mvc.perform(post("/consumer/stripe/subscriptions").contentType(APPLICATION_JSON)
+                        .content("{\"customer\":\"cus_demo\",\"price\":\"price_demo\"}"))
+```
+
+7. **java-test** ? `src/test/java/demo/stripe/StripeBillingControllerTest.java:21-45` (score 0.942)
+
+```text
+void fiveUnaffectedControlEndpointsStillWork() throws Exception {
+        mvc.perform(get("/consumer/stripe/customers/cus_demo"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.object").value("customer"));
+        mvc.perform(get("/consumer/stripe/products/prod_demo"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.object").value("product"));
+        mvc.perform(get("/consumer/stripe/coupons/coupon_demo"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.object").value("coupon"));
+        mvc.perform(get("/consumer/stripe/files/file_demo"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.object").value("file"));
+        mvc.perform(get("/consumer/stripe/prices/price_demo"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.object").value("price"));
+    }
+
+    @Test
+    void basilScheduleRequestStillUsesIterations() throws Exception {
+        mvc.perform(post("/consumer/stripe/subscription-schedules").contentType(APPLICATION_JSON)
+                        .content("""
+                                {"customer":"cus_demo","phases":[{"price":"price_demo","iterations":3}]}
+                                """))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.total_iterations").value(3));
+    }
+
+    @Test
+    void basilPromotionCodeRequestStillUsesTopLevelCoupon() throws Exception {
+        mvc.perform(post("/consumer/stripe/promotion-codes").contentType(APPLICATION_JSON)
+```
+
+8. **java-source** ? `src/main/java/demo/stripe/StripeBillingController.java:41-55` (score 0.803)
+
+```text
+return Map.of("id", "sub_demo", "customer", request.customer(),
+                "billing_mode", "classic (assumed by this Basil-era consumer)");
+    }
+
+    public record ScheduleRequest(String customer, List<SchedulePhase> phases) {}
+    public record SchedulePhase(String price, int iterations) {}
+    public record PromotionCodeRequest(String coupon) {}
+    public record Promotion(String type, String coupon) {}
+    public record Coupon(String id, String name) {}
+    public record SubscriptionDiscountResponse(String id, List<DiscountResponse> discounts) {}
+    public record DiscountResponse(String id, Coupon coupon) {}
+    public record CheckoutSessionResponse(String id, String currency,
+                                          @JsonProperty("currency_conversion") Map<String, Object> currencyConversion) {}
+    public record SubscriptionRequest(String customer, String price) {}
+}
+```
+
+
+PS C:\Users\Jayesh Tripathi\Documents\Codex\2026-09-24\referenced-chatgpt-conversation-this-is-an\test-projects\stripe-consumer> .\run-dependabot.ps1 -TargetVersion 2025-09-30.clover -LiveAnswer
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-09-28T04:18:32.830+05:30  INFO 10376 --- [           main] o.a.ApiDependabotApplication             : Starting ApiDependabotApplication v0.1.0-SNAPSHOT using Java 21.0.4 with PID 10376 (C:\Users\Jayesh Tripathi\Documents\Codex\2026-09-24\referenced-chatgpt-conversation-this-is-an\target\api-dependabot-0.1.0-SNAPSHOT.jar started by Jayesh Tripathi in C:\Users\Jayesh Tripathi\Documents\Codex\2026-09-24\referenced-chatgpt-conversation-this-is-an)
+2026-09-28T04:18:32.837+05:30  INFO 10376 --- [           main] o.a.ApiDependabotApplication             : No active profile set, falling back to 1 default profile: "default"
+2026-09-28T04:18:36.761+05:30  INFO 10376 --- [           main] o.a.ApiDependabotApplication             : Started ApiDependabotApplication in 5.078 seconds (process running for 6.632)
+### Stripe consumer test fixture (Clover target) (v 2025-09-30.clover)
+---
+
+#### What's Changed
+---
+
+##### `POST` /subscription_schedules
+
+> Create schedule (Clover uses duration)
+
+
+###### Request:
+
+Changed content type : `application/x-www-form-urlencoded`
+
+* Changed property `phases` (array)
+
+    Changed items (object):
+
+    * Added property `duration` (object)
+
+        * Property `interval` (string)
+
+        * Property `interval_count` (integer)
+
+    * Deleted property `iterations` (integer)
+
+##### `POST` /promotion_codes
+
+> Create promotion code (Clover polymorphic promotion)
+
+
+###### Request:
+
+Changed content type : `application/x-www-form-urlencoded`
+
+* Added property `promotion` (object)
+
+    * Property `type` (string)
+
+        Enum value:
+
+        * `coupon`
+    * Property `coupon` (string)
+
+* Deleted property `coupon` (string)
+
+##### `GET` /subscriptions/{id}
+
+
+###### Return Type:
+
+Changed response : **200 OK**
+> Discount with source; coupon is not auto-expanded
+
+
+* Changed content type : `application/json`
+
+    * Changed property `discounts` (array)
+
+        Changed items (object):
+
+        * Added property `source` (object)
+
+            * Property `type` (string)
+
+            * Property `coupon` (string)
+
+        * Deleted property `coupon` (object)
+
+##### `GET` /checkout/sessions/{id}
+
+
+###### Return Type:
+
+Changed response : **200 OK**
+> Checkout Session; currency_conversion removed
+
+
+* Changed content type : `application/json`
+
+    * Added property `currency` (string)
+
+    * Deleted property `currency_conversion` (object)
+
+##### `POST` /subscriptions
+
+> Create subscription; flexible billing is now the default
+
+
+###### Request:
+
+Changed content type : `application/x-www-form-urlencoded`
+
+* Added property `billing_mode` (object)
+    > Explicitly select flexible or classic; default is now flexible
+
+
+###### Return Type:
+
+Changed response : **200 OK**
+> Subscription created with flexible default billing mode
+
+#### Result
+---
+
+API changes are backward compatible
+
+
+#### Potential consumer impact (review required)
+
+- GET /checkout/sessions/{id} response 200 application/json: removed response properties [currency_conversion]; review consumer references (the diff library may still classify this as backward compatible).
+
+### Vanilla RAG answer
+
+Confirmed contract changes (from the supplied OpenAPI diff)
+- subscription_schedules POST: phases[].iterations (integer) removed; phases[].duration (object) added (properties: interval (string), interval_count (integer)). (OpenAPI diff evidence)
+- promotion_codes POST: top-level coupon (string) removed; new promotion (object) added with promotion.type (enum includes "coupon") and promotion.coupon (string). (OpenAPI diff evidence)
+- subscriptions GET: discounts[].coupon (object) removed; discounts[].source (object with type and coupon (string)) added ? discounts no longer auto-expand coupon. (OpenAPI diff evidence)
+- checkout/sessions GET: currency_conversion (object) removed; currency (string) added. (OpenAPI diff evidence)
+- subscriptions POST: new billing_mode (object) added; default billing semantics changed to flexible (i.e., integrations that need classic must opt into classic). (OpenAPI diff evidence)
+
+Confirmed consumer code affected in this repository (evidence)
+- Subscription schedule creation: createSchedule reads phases[].iterations and sums them. Affected method: createSchedule(...) and SchedulePhase record using int iterations. [E2] and [E8]
+- Promotion code creation: createPromotionCode expects a top-level PromotionCodeRequest.coupon and returns that value. Affected method and PromotionCodeRequest record. [E2] and [E8]
+- Subscription GET / discount handling: getSubscription returns DiscountResponse with an expanded Coupon; consumer expects discounts[0].coupon.name. Affected method and DiscountResponse/Coupon records. [E3] and [E8]
+- Checkout Session GET: getCheckoutSession returns CheckoutSessionResponse with a currency_conversion field and test expects currency_conversion.amount. Affected method and CheckoutSessionResponse record. [E3] and [E8]
+- Subscription creation billing semantics: createSubscription assumes classic billing (controller returns "classic (assumed by this Basil-era consumer)"). Affected method and SubscriptionRequest usage. [E3] and [E8]
+- Tests assert old shapes: unit tests exercise the Basil shapes (iterations, top-level coupon, expanded discount.coupon, currency_conversion, classic billing assumptions). See tests expecting these values. [E6] and [E7]
+
+Migration recommended by release documentation (repo docs + release notes)
+- Change phases[].iterations -> phases[].duration (use duration.interval and duration.interval_count). [E5]
+- Replace top-level promotion coupon with promotion.type=coupon and promotion.coupon when creating promotion_codes. [E5]
+- For discounts in responses, stop expecting expanded coupon objects at discounts[].coupon; instead use discounts[].source and, if you need the coupon object, fetch/expand the coupon from the source as appropriate. [E5]
+- Stop reading currency_conversion from checkout session responses; read the new currency field and remove code that expects currency_conversion. [E5]
+- If you require the old "classic" subscription semantics, explicitly pass billing_mode.type=classic when creating subscriptions (Clover defaults to flexible). [E5] (also summarized in README/upgrade instructions) [E1][E4]
+
+Confirmed vs possible consumer impact
+- Confirmed: The local Java consumer fixture in this repository must be updated in the five places listed above (methods, request/response records, and tests) to match Clover shapes. Evidence: controller and record definitions plus tests [E2][E3][E8][E6][E7].
+- Possible wider impact: The OpenAPI diff labels the changes as ?API changes are backward compatible? but flags removal of currency_conversion as something to review; other external consumers (outside this repo) may break if they relied on removed fields or implicit classic billing. This repo?s tests will fail until the fixture is migrated (tests currently expect the Basil shapes) [OpenAPI diff evidence] and [E6].
+
+Concise recommendation
+- Update the consumer code at the call sites shown in this fixture:
+  - Replace SchedulePhase.iterations with a duration object and update createSchedule logic. [E2][E8]
+  - Change PromotionCodeRequest shape to promotion.type/coupon and update createPromotionCode. [E2][E8]
+  - Adjust subscription discount handling to read discounts[].source and, if needed, fetch/expand the coupon from that source instead of relying on discounts[].coupon expansion. [E3][E8]
+  - Remove reliance on CheckoutSession.currency_conversion; use CheckoutSession.currency and any new currency-conversion workflow. Update getCheckoutSession and tests. [E3][E6][E8]
+  - When creating subscriptions, explicitly send billing_mode.type=classic if you require classic billing behavior. Otherwise accept flexible default. [E5][E1]
+- Update local request/response records and tests to use the Clover shapes. [E1][E5]
+
+Uncertainty
+- This assessment is limited to the checked-in consumer fixture in this repository and the supplied OpenAPI diff. I cannot verify other consumers or runtime test results beyond the repo tests, nor can I run tests here. There may be additional consumer code outside the checked-in fixture that also needs migration; that is not visible in the provided evidence. [E1][E4][E6]
+
+Evidence map:
+- [E1] `README.md:21-37`
+- [E2] `src/main/java/demo/stripe/StripeBillingController.java:1-25`
+- [E3] `src/main/java/demo/stripe/StripeBillingController.java:21-45`
+- [E4] `README.md:1-25`
+- [E5] `src/README.md:1-9`
+- [E6] `src/test/java/demo/stripe/StripeBillingControllerTest.java:41-65`
+- [E7] `src/test/java/demo/stripe/StripeBillingControllerTest.java:21-45`
+- [E8] `src/main/java/demo/stripe/StripeBillingController.java:41-55`
+
+Live model call latency: 24602 ms
+PS C:\Users\Jayesh Tripathi\Documents\Codex\2026-09-24\referenced-chatgpt-conversation-this-is-an\test-projects\stripe-consumer>

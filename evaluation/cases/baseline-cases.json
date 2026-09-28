@@ -1,0 +1,80 @@
+[
+  {
+    "caseId": "removed-operation-001",
+    "split": "development",
+    "oldSpec": "src/test/resources/specs/v1.yaml",
+    "newSpec": "src/test/resources/specs/v2-removed-operation.yaml",
+    "expectedChanges": [
+      {
+        "kind": "removed-operation",
+        "method": "GET",
+        "path": "/widgets/{id}",
+        "compatibility": "breaking"
+      }
+    ],
+    "expectedAssessment": "A consumer calling GET /widgets/{id} may stop working."
+  },
+  {
+    "caseId": "added-operation-001",
+    "split": "development",
+    "oldSpec": "src/test/resources/specs/v1.yaml",
+    "newSpec": "src/test/resources/specs/v2-added-operation.yaml",
+    "expectedChanges": [
+      {
+        "kind": "added-operation",
+        "method": "POST",
+        "path": "/widgets",
+        "compatibility": "compatible"
+      }
+    ],
+    "expectedAssessment": "Adding an operation is generally backward compatible for existing consumers."
+  },
+  {
+    "caseId": "required-request-field-001",
+    "split": "development",
+    "oldSpec": "src/test/resources/specs/v1-with-create.yaml",
+    "newSpec": "src/test/resources/specs/v2-required-request-field.yaml",
+    "expectedChanges": [
+      {
+        "kind": "added-required-request-property",
+        "method": "POST",
+        "path": "/widgets",
+        "property": "category",
+        "compatibility": "breaking"
+      }
+    ],
+    "expectedAssessment": "Existing clients creating a widget must now send category."
+  },
+  {
+    "caseId": "removed-response-property-001",
+    "split": "development",
+    "oldSpec": "src/test/resources/specs/v1.yaml",
+    "newSpec": "src/test/resources/specs/v2-removed-response-property.yaml",
+    "expectedChanges": [
+      {
+        "kind": "removed-response-property",
+        "method": "GET",
+        "path": "/widgets/{id}",
+        "property": "name",
+        "compatibility": "review-required"
+      }
+    ],
+    "expectedAssessment": "The diff library marks this response change backward compatible, but consumers that read name may be affected; inspect repository usage."
+  },
+  {
+    "caseId": "renamed-path-parameter-001",
+    "split": "development",
+    "oldSpec": "src/test/resources/specs/v1.yaml",
+    "newSpec": "src/test/resources/specs/v2-renamed-path-parameter.yaml",
+    "expectedChanges": [
+      {
+        "kind": "renamed-path-parameter",
+        "method": "GET",
+        "pathBefore": "/widgets/{id}",
+        "pathAfter": "/widgets/{widgetId}",
+        "compatibility": "review-required"
+      }
+    ],
+    "expectedAssessment": "The diff library normalizes parameter names and reports no difference; generated client argument bindings may still change."
+  }
+]

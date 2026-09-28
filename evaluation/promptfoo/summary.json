@@ -1,0 +1,160 @@
+{
+  "evalId": "eval-ugt-2026-09-28T00:38:17",
+  "generatedAt": "2026-09-28T00:44:44.973Z",
+  "sourceResults": "evaluation/promptfoo/results.json",
+  "rowCount": 12,
+  "approaches": [
+    {
+      "approach": "ReAct",
+      "passed": 6,
+      "total": 6,
+      "passRate": 1,
+      "meanJudgeScore": 1,
+      "medianLatencyMillis": 33466.5,
+      "totalToolCalls": 42
+    },
+    {
+      "approach": "Vanilla RAG",
+      "passed": 6,
+      "total": 6,
+      "passRate": 1,
+      "meanJudgeScore": 1,
+      "medianLatencyMillis": 12421.5,
+      "totalToolCalls": 0
+    }
+  ],
+  "cases": [
+    {
+      "caseId": "removed-response-name-001",
+      "description": "removed response property name consumer impact",
+      "approach": "ReAct",
+      "passed": true,
+      "score": 1,
+      "judgeScore": 1,
+      "judgePassed": true,
+      "latencyMillis": 35266,
+      "toolCallCount": 8
+    },
+    {
+      "caseId": "removed-response-name-001",
+      "description": "removed response property name consumer impact",
+      "approach": "Vanilla RAG",
+      "passed": true,
+      "score": 1,
+      "judgeScore": 1,
+      "judgePassed": true,
+      "latencyMillis": 9644,
+      "toolCallCount": 0
+    },
+    {
+      "caseId": "removed-operation-001",
+      "description": "removed GET operation impact",
+      "approach": "Vanilla RAG",
+      "passed": true,
+      "score": 1,
+      "judgeScore": 1,
+      "judgePassed": true,
+      "latencyMillis": 17236,
+      "toolCallCount": 0
+    },
+    {
+      "caseId": "removed-operation-001",
+      "description": "removed GET operation impact",
+      "approach": "ReAct",
+      "passed": true,
+      "score": 1,
+      "judgeScore": 1,
+      "judgePassed": true,
+      "latencyMillis": 29565,
+      "toolCallCount": 8
+    },
+    {
+      "caseId": "added-operation-001",
+      "description": "added POST operation compatibility",
+      "approach": "Vanilla RAG",
+      "passed": true,
+      "score": 1,
+      "judgeScore": 1,
+      "judgePassed": true,
+      "latencyMillis": 8053,
+      "toolCallCount": 0
+    },
+    {
+      "caseId": "added-operation-001",
+      "description": "added POST operation compatibility",
+      "approach": "ReAct",
+      "passed": true,
+      "score": 1,
+      "judgeScore": 1,
+      "judgePassed": true,
+      "latencyMillis": 34906,
+      "toolCallCount": 8
+    },
+    {
+      "caseId": "required-request-field-001",
+      "description": "newly required request property",
+      "approach": "ReAct",
+      "passed": true,
+      "score": 1,
+      "judgeScore": 1,
+      "judgePassed": true,
+      "latencyMillis": 32447,
+      "toolCallCount": 8
+    },
+    {
+      "caseId": "required-request-field-001",
+      "description": "newly required request property",
+      "approach": "Vanilla RAG",
+      "passed": true,
+      "score": 1,
+      "judgeScore": 1,
+      "judgePassed": true,
+      "latencyMillis": 9616,
+      "toolCallCount": 0
+    },
+    {
+      "caseId": "renamed-path-parameter-001",
+      "description": "renamed path parameter review",
+      "approach": "Vanilla RAG",
+      "passed": true,
+      "score": 1,
+      "judgeScore": 1,
+      "judgePassed": true,
+      "latencyMillis": 15199,
+      "toolCallCount": 0
+    },
+    {
+      "caseId": "renamed-path-parameter-001",
+      "description": "renamed path parameter review",
+      "approach": "ReAct",
+      "passed": true,
+      "score": 1,
+      "judgeScore": 1,
+      "judgePassed": true,
+      "latencyMillis": 28281,
+      "toolCallCount": 4
+    },
+    {
+      "caseId": "stripe-basil-clover-consumer-001",
+      "description": "Stripe Basil to Clover consumer migration",
+      "approach": "ReAct",
+      "passed": true,
+      "score": 1,
+      "judgeScore": 1,
+      "judgePassed": true,
+      "latencyMillis": 34486,
+      "toolCallCount": 6
+    },
+    {
+      "caseId": "stripe-basil-clover-consumer-001",
+      "description": "Stripe Basil to Clover consumer migration",
+      "approach": "Vanilla RAG",
+      "passed": true,
+      "score": 1,
+      "judgeScore": 1,
+      "judgePassed": true,
+      "latencyMillis": 30916,
+      "toolCallCount": 0
+    }
+  ]
+}
