@@ -85,11 +85,6 @@ The model can iteratively inspect the diff, search Java, read a bounded Java lin
 
 The MVP is limited to OpenAPI 3.x, Java/Spring Boot, Maven, and GitHub. The planned comparison is Vanilla RAG versus a ReAct tool-using agent on the same evaluation cases. The final architecture choice will be based on measured results.
 
-## Submission materials and three-minute demo
-
-The submission folder contains a one-page project summary, the [system design PDF](submission/API_Dependabot_System_Design.pdf) and [editable Markdown source](submission/SYSTEM_DESIGN.md), a 5-page project documentation PDF, and `submission/DEMO_SCRIPT.md` with a timed three-minute walkthrough.
-
-For the demo, show the deterministic OpenAPI diff first, then run the same sample question in Vanilla RAG and ReAct mode. Finish by opening `evaluation/promptfoo/summary.json` and explaining the paired results and why the development-set run is not a final architecture decision.
 
 ### Stripe Basil-to-Clover demo and tests
 
