@@ -4,7 +4,15 @@ API Dependabot is a capstone MVP for detecting OpenAPI 3.x changes, identifying 
 
 ## Project status
 
-Planning and architecture are documented in [DESIGN.md](DESIGN.md) and [PROJECT_PLAN.md](PROJECT_PLAN.md). The deterministic baseline compares local OpenAPI specs, analyzes Java source/test matches, and ranks relevant code and contract evidence for a question. Vanilla RAG and the read-only ReAct agent are implemented as opt-in live-model paths. A six-case Promptfoo development-set comparison has completed; the current run is recorded below. It is not a held-out evaluation and does not establish a final architecture choice.
+Planning and architecture are documented in [DESIGN.md](DESIGN.md) and [PROJECT_PLAN.md](PROJECT_PLAN.md).
+
+ The deterministic baseline compares local OpenAPI specs, analyzes Java source/test matches, and ranks relevant code and contract evidence for a question. 
+ 
+ Vanilla RAG and the read-only ReAct agent are implemented as opt-in live-model paths.
+ 
+  A six-case Promptfoo development-set comparison has completed; the current run is recorded below. It is not a held-out evaluation and does not establish a final architecture choice.
+
+  The final test for the capstone submission is the Stripe Basil-to-Clover demo and tests where we check for the migration strategy from stripe [basil](https://docs.stripe.com/changelog#2025-07-30.basil) to stripe [clover](https://docs.stripe.com/changelog#2025-09-30.clover) which has some breaking changs also.
 
 ## Run the deterministic diff
 
@@ -100,6 +108,164 @@ mvn -Pecj-compiler package
 ```
 
 The live Vanilla RAG and ReAct runs use the same Stripe contract pair, repository, and question, making their evidence and migration recommendations easy to compare. For the full paired evaluation, run `npm run eval`; the Stripe case is part of the shared set and its results contribute to `evaluation/promptfoo/summary.json`.
+
+the output form the CLI
+```` 
+Step 3/4: running the complete shared Vanilla RAG vs ReAct evaluation...
+
+> eval
+> promptfoo eval -c evaluation/promptfoo/config.yaml --no-cache --output evaluation/promptfoo/results.json
+
+(node:37652) ExperimentalWarning: DecompressInterceptor is experimental and subject to change
+(Use `node --trace-warnings ...` to show where the warning was created)
+Cache is disabled.
+Starting evaluation eval-ugt-2026-09-28T00:38:17
+Running 12 test cases (up to 4 at a time)...
+Evaluating [████████████████████████████████████████] 100% | 12/12 | Vanilla RAG "Answer thi" caseId=stripe-basil-clover-consumer-001
+
+┌──────────────────────┬──────────────────────┬──────────────────────┬──────────────────────┬──────────────────────┬──────────────────────┬──────────────────────┬──────────────────────┬──────────────────────┐
+│ caseId               │ oldSpec              │ newSpec              │ repository           │ question             │ expectedSymbol       │ expectedAssessment   │ [Vanilla RAG] Answer │ [ReAct] Answer this  │
+│                      │                      │                      │                      │                      │                      │                      │ this migration       │ migration question   │
+│                      │                      │                      │                      │                      │                      │                      │ question using       │ using evidence from  │
+│                      │                      │                      │                      │                      │                      │                      │ evidence from the    │ the supplied API and │
+│                      │                      │                      │                      │                      │                      │                      │ supplied API and     │ Java repository:     │
+│                      │                      │                      │                      │                      │                      │                      │ Java repository:     │ {{question}}         │
+│                      │                      │                      │                      │                      │                      │                      │ {{question}}         │                      │
+├──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┤
+│ removed-response-na… │ src/test/resources/… │ src/test/resources/… │ src/test/resources/… │ Where does the Java  │ getName()            │ The response         │ [PASS] Confirmed     │ [PASS] Short answer  │
+│                      │                      │                      │                      │ consumer read the    │                      │ property name was    │ contract change      │ - The consumer code  │
+│                      │                      │                      │                      │ removed widget name? │                      │ removed from GET     │ - The API removed    │ reads the widget     │
+│                      │                      │                      │                      │                      │                      │ /widgets/{id}; the   │ the response         │ name via             │
+│                      │                      │                      │                      │                      │                      │ sample Java service  │ property "name" from │ Widget.getName(),    │
+│                      │                      │                      │                      │                      │                      │ calls                │ GET /widgets/{id}    │ which is called from │
+│                      │                      │                      │                      │                      │                      │ Widget.getName(),    │ 200 application/json │ WidgetService.displ… │
+│                      │                      │                      │                      │                      │                      │ but the sample does  │ [E1].                │ (src/main/java/demo… │
+│                      │                      │                      │                      │                      │                      │ not show HTTP        │ Where the Java       │ and asserted in the  │
+│                      │                      │                      │                      │                      │                      │ deserialization.     │ consumer reads the   │ unit test            │
+│                      │                      │                      │                      │                      │                      │                      │ removed name         │ (src/test/java/demo… │
+│                      │                      │                      │                      │                      │                      │                      │ - The consumer calls │                      │
+│                      │                      │                      │                      │                      │                      │                      │ widget.getName() in  │                      │
+│                      │                      │                      │                      │                      │                      │                      │ WidgetService.displ… │                      │
+│                      │                      │                      │                      │                      │                      │                      │ (retu...             │                      │
+├──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┤
+│ removed-operation-0… │ src/test/resources/… │ src/test/resources/… │ src/test/resources/… │ Which API operation  │ /widgets/{id}        │ GET /widgets/{id}    │ [PASS] Confirmed     │ [PASS] Short answer  │
+│                      │                      │                      │                      │ was removed, and     │                      │ was removed and is a │ contract change      │ - Removed operation: │
+│                      │                      │                      │                      │ what should a Java   │                      │ breaking contract    │ - The OpenAPI diff   │ GET /widgets/{id}    │
+│                      │                      │                      │                      │ consumer check?      │                      │ change; callers of   │ shows the GET        │ (OpenAPI diff) [T1]. │
+│                      │                      │                      │                      │                      │                      │ that operation need  │ /widgets/{id}        │ - In this Java       │
+│                      │                      │                      │                      │                      │                      │ review.              │ operation was        │ repository I found   │
+│                      │                      │                      │                      │                      │                      │                      │ removed (deleted)    │ no code that calls   │
+│                      │                      │                      │                      │                      │                      │                      │ from the Widget API  │ that endpoint.       │
+│                      │                      │                      │                      │                      │                      │                      │ spec, breaking       │ Search for           │
+│                      │                      │                      │                      │                      │                      │                      │ backward             │ "widgets/" returned  │
+│                      │                      │                      │                      │                      │                      │                      │ compatibility [E1].  │ no matches [T2], and │
+│                      │                      │                      │                      │                      │                      │                      │ Possible consumer    │ the only             │
+│                      │                      │                      │                      │                      │                      │                      │ impact (Java)        │ Widget-related code  │
+│                      │                      │                      │                      │                      │                      │                      │ - Any Java code that │ is a local           │
+│                      │                      │                      │                      │                      │                      │                      │ called the removed   │ model/service/...    │
+│                      │                      │                      │                      │                      │                      │                      │ opera...             │                      │
+├──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┤
+│ added-operation-001  │ src/test/resources/… │ src/test/resources/… │ src/test/resources/… │ Does adding POST     │ POST /widgets        │ Adding POST /widgets │ [PASS] Confirmed     │ [PASS] Short answer  │
+│                      │                      │                      │                      │ /widgets break       │                      │ is generally         │ contract change      │ - No — adding POST   │
+│                      │                      │                      │                      │ existing consumers?  │                      │ backward compatible  │ - A new endpoint     │ /widgets is an       │
+│                      │                      │                      │                      │                      │                      │ for existing         │ POST /widgets was    │ additive,            │
+│                      │                      │                      │                      │                      │                      │ consumers, though    │ added in v2.0.0.     │ backward-compatible  │
+│                      │                      │                      │                      │                      │                      │ consumers may adopt  │ This is shown in the │ change and (based on │
+│                      │                      │                      │                      │                      │                      │ the new operation.   │ provided OpenAPI     │ the repository       │
+│                      │                      │                      │                      │                      │                      │                      │ diff summary [E1].   │ content) does not    │
+│                      │                      │                      │                      │                      │                      │                      │ Confirmed            │ break existing       │
+│                      │                      │                      │                      │                      │                      │                      │ compatibility        │ consumers of this    │
+│                      │                      │                      │                      │                      │                      │                      │ statement            │ repo.                │
+│                      │                      │                      │                      │                      │                      │                      │ - The diff record    │ What I confirmed     │
+│                      │                      │                      │                      │                      │                      │                      │ explicitly states    │ from the repo        │
+│                      │                      │                      │                      │                      │                      │                      │ “API changes are     │ - The OpenAPI diff   │
+│                      │                      │                      │                      │                      │                      │                      │ backward compatible” │ shows a new          │
+│                      │                      │                      │                      │                      │                      │                      │ [E1...               │ operation POST...    │
+├──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┤
+│ required-request-fi… │ src/test/resources/… │ src/test/resources/… │ src/test/resources/… │ What must existing   │ category             │ The POST /widgets    │ [PASS] Confirmed     │ [PASS] Short answer  │
+│                      │                      │                      │                      │ clients change when  │                      │ request now requires │ contract changes     │ - Confirmed: POST    │
+│                      │                      │                      │                      │ creating a widget?   │                      │ category, so         │ (from the OpenAPI    │ /widgets now         │
+│                      │                      │                      │                      │                      │                      │ existing create      │ diff)                │ requires the request │
+│                      │                      │                      │                      │                      │                      │ clients must include │ - POST /widgets now  │ body to be           │
+│                      │                      │                      │                      │                      │                      │ it; the sample       │ requires request     │ application/json and │
+│                      │                      │                      │                      │                      │                      │ repository does not  │ Content-Type:        │ adds a new required  │
+│                      │                      │                      │                      │                      │                      │ demonstrate a create │ application/json.    │ string property      │
+│                      │                      │                      │                      │                      │                      │ request.             │ - POST /widgets      │ category. (OpenAPI   │
+│                      │                      │                      │                      │                      │                      │                      │ request body has a   │ diff) [T2].          │
+│                      │                      │                      │                      │                      │                      │                      │ new required         │ - Effect for clients │
+│                      │                      │                      │                      │                      │                      │                      │ property "category"  │ creating widgets:    │
+│                      │                      │                      │                      │                      │                      │                      │ (string).            │ they must send       │
+│                      │                      │                      │                      │                      │                      │                      │ - The change is      │ Content-Type:        │
+│                      │                      │                      │                      │                      │                      │                      │ flagged as breaking  │ application/jso...   │
+│                      │                      │                      │                      │                      │                      │                      │ (backward inc...     │                      │
+├──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┤
+│ renamed-path-parame… │ src/test/resources/… │ src/test/resources/… │ src/test/resources/… │ What changed in the  │ widgetId             │ The path parameter   │ [PASS] Confirmed     │ [PASS] Short answer  │
+│                      │                      │                      │                      │ widget lookup path,  │                      │ changed from id to   │ contract change      │ - What changed: the  │
+│                      │                      │                      │                      │ and what should a    │                      │ widgetId; the diff   │ (from the OpenAPI    │ GET widget lookup    │
+│                      │                      │                      │                      │ generated client     │                      │ tool may normalize   │ diff)                │ path’s               │
+│                      │                      │                      │                      │ maintainer review?   │                      │ this, so             │ - GET /widgets/{id}  │ path-parameter name  │
+│                      │                      │                      │                      │                      │                      │ generated-client     │ was changed to GET   │ was renamed from     │
+│                      │                      │                      │                      │                      │                      │ bindings warrant     │ /widgets/{widgetId}  │ {id} to {widgetId}   │
+│                      │                      │                      │                      │                      │                      │ review.              │ — the path parameter │ (OpenAPI diff) [T1]. │
+│                      │                      │                      │                      │                      │                      │                      │ name changed (no     │ - What a             │
+│                      │                      │                      │                      │                      │                      │                      │ other spec           │ generated-client     │
+│                      │                      │                      │                      │                      │                      │                      │ differences were     │ maintainer should    │
+│                      │                      │                      │                      │                      │                      │                      │ reported) [E1].      │ review:              │
+│                      │                      │                      │                      │                      │                      │                      │ Possible consumer    │ parameter-name       │
+│                      │                      │                      │                      │                      │                      │                      │ impact and what a    │ bindings in the      │
+│                      │                      │                      │                      │                      │                      │                      │ generated-client     │ generated client     │
+│                      │                      │                      │                      │                      │                      │                      │ ma...                │ (method sign...      │
+├──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┤
+│ stripe-basil-clover… │ test-projects/strip… │ test-projects/strip… │ test-projects/strip… │ We are upgrading     │ currency_conversion  │ Existing request     │ [PASS] Confirmed     │ [PASS] Summary —     │
+│                      │                      │                      │                      │ this Stripe consumer │                      │ migrations include   │ contract changes     │ confirmed contract   │
+│                      │                      │                      │                      │ from                 │                      │ phases[].iterations  │ (from the OpenAPI    │ changes that affect  │
+│                      │                      │                      │                      │ 2025-08-27.basil to  │                      │ to phases[].duration │ diff)                │ this repository      │
+│                      │                      │                      │                      │ 2025-09-30.clover.   │                      │ and top-level        │ - POST               │ (with repo evidence) │
+│                      │                      │                      │                      │ Which existing       │                      │ promotion-code       │ /subscription_sched… │ and the migration    │
+│                      │                      │                      │                      │ request and response │                      │ coupon to            │ (request)            │ actions to take:     │
+│                      │                      │                      │                      │ fields need          │                      │ promotion.type/prom… │   - Removed:         │ 1) POST              │
+│                      │                      │                      │                      │ migration, and what  │                      │ Subscription         │ phases[].iterations  │ /subscription_sched… │
+│                      │                      │                      │                      │ should we check      │                      │ Discount responses   │   - Added:           │ —                    │
+│                      │                      │                      │                      │ about the new        │                      │ replace              │ phases[].duration    │ phases[].iterations  │
+│                      │                      │                      │                      │ subscription billing │                      │ discounts[].coupon   │ (object) with        │ removed, replaced by │
+│                      │                      │                      │                      │ default?             │                      │ with                 │ interval (string)    │ phases[].duration    │
+│                      │                      │                      │                      │                      │                      │ discounts[].source,  │ and interval_count   │ (interval +          │
+│                      │                      │                      │                      │                      │                      │ and Checkout S...    │ (integer)            │ interval_count)      │
+│                      │                      │                      │                      │                      │                      │                      │   - Source: contract │ - Wh...              │
+│                      │                      │                      │                      │                      │                      │                      │ diff [E2]. ...       │                      │
+└──────────────────────┴──────────────────────┴──────────────────────┴──────────────────────┴──────────────────────┴──────────────────────┴──────────────────────┴──────────────────────┴──────────────────────┘
+✓ Eval complete (ID: eval-ugt-2026-09-28T00:38:17)
+
+Total Tokens: 13,946
+  Grading: 13,946 (12,001 prompt, 1,945 completion, 660 reasoning)
+
+Results:
+  ✓ 12 passed (100%)
+  0 failed (0%)
+  0 errors (0%)
+Duration: 6m 26s (concurrency: 4)
+
+Writing output to evaluation/promptfoo/results.json
+Step 4/4: summarizing pass rate, judge scores, latency, and ReAct tool use...
+Case                                    | Approach     | Pass   | Judge  | Latency    | Tools
+----------------------------------------+--------------+--------+--------+------------+------
+removed-response-name-001               | ReAct        | PASS   | 1.00   | 35266 ms   | 8
+removed-response-name-001               | Vanilla RAG  | PASS   | 1.00   | 9644 ms    | 0
+removed-operation-001                   | Vanilla RAG  | PASS   | 1.00   | 17236 ms   | 0
+removed-operation-001                   | ReAct        | PASS   | 1.00   | 29565 ms   | 8
+added-operation-001                     | Vanilla RAG  | PASS   | 1.00   | 8053 ms    | 0
+added-operation-001                     | ReAct        | PASS   | 1.00   | 34906 ms   | 8
+required-request-field-001              | ReAct        | PASS   | 1.00   | 32447 ms   | 8
+required-request-field-001              | Vanilla RAG  | PASS   | 1.00   | 9616 ms    | 0
+renamed-path-parameter-001              | Vanilla RAG  | PASS   | 1.00   | 15199 ms   | 0
+renamed-path-parameter-001              | ReAct        | PASS   | 1.00   | 28281 ms   | 4
+stripe-basil-clover-consumer-001        | ReAct        | PASS   | 1.00   | 34486 ms   | 6
+stripe-basil-clover-consumer-001        | Vanilla RAG  | PASS   | 1.00   | 30916 ms   | 0
+
+Approach summary:
+- ReAct: 6/6 passed; mean judge 1.00; median latency 33467 ms; ReAct tool calls 42.
+- Vanilla RAG: 6/6 passed; mean judge 1.00; median latency 12422 ms; ReAct tool calls 0.
+````
 
 ## Failure analysis and pivots
 
