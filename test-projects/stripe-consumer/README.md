@@ -18,6 +18,8 @@ $mavenRepo = Join-Path $root 'work/.m2/stripe-consumer-repository'
 
 If Maven is installed globally, use `mvn test` and `mvn spring-boot:run`. Controller routes are under `/consumer/stripe`, for example `GET /consumer/stripe/customers/cus_demo`.
 
+The root validation script also runs these fixture tests, so the standard end-to-end check covers both the main application and this separate consumer project.
+
 ## Run API Dependabot for a target version
 
 Build the main API Dependabot JAR once from the root directory. Then from this fixture directory:
@@ -30,7 +32,17 @@ The target version is explicit and maps to a checked-in contract snapshot. The s
 
 Recorded terminal runs and findings are in [test observations](docs/test-observations.md); the raw console transcript is linked there.
 
-For an evidence-cited live Vanilla RAG answer, after setting the model environment variables described in the root README, add `-LiveAnswer`. That makes a billable model request. The user question can be supplied with `-Question '...'`.
+Use `-Approach offline` (the default) for deterministic diff and retrieval without a model call. For an evidence-cited live answer, set the model environment variables described in the root README and choose `-Approach vanilla-rag` or `-Approach react`. Each command makes a live, billable model call; ReAct can make several model round-trips. The question can be supplied with `-Question '...'`.
+
+For a short capstone demo, show the offline Clover analysis, then run the same question through both approaches:
+
+```powershell
+./run-dependabot.ps1 -TargetVersion 2025-09-30.clover -Approach offline
+./run-dependabot.ps1 -TargetVersion 2025-09-30.clover -Approach vanilla-rag
+./run-dependabot.ps1 -TargetVersion 2025-09-30.clover -Approach react
+```
+
+The live calls use the checked-in Basil and Clover contract excerpts, the Java consumer source, and release-note evidence. For a repeatable quantitative comparison instead, run the shared Promptfoo evaluation from the project root; its Stripe case is evaluated by both providers and included in `evaluation/promptfoo/summary.json`.
 
 ## Upgrade the consumer
 

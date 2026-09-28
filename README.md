@@ -87,9 +87,24 @@ The MVP is limited to OpenAPI 3.x, Java/Spring Boot, Maven, and GitHub. The plan
 
 ## Submission materials and three-minute demo
 
-The submission folder contains a one-page project summary, a 2-page design PDF, a 5-page project documentation PDF, their Markdown sources (`DESIGN.md` and `submission/PROJECT_DOCUMENTATION.md`), and `submission/DEMO_SCRIPT.md` with a timed three-minute walkthrough.
+The submission folder contains a one-page project summary, the [system design PDF](submission/API_Dependabot_System_Design.pdf) and [editable Markdown source](submission/SYSTEM_DESIGN.md), a 5-page project documentation PDF, and `submission/DEMO_SCRIPT.md` with a timed three-minute walkthrough.
 
 For the demo, show the deterministic OpenAPI diff first, then run the same sample question in Vanilla RAG and ReAct mode. Finish by opening `evaluation/promptfoo/summary.json` and explaining the paired results and why the development-set run is not a final architecture decision.
+
+### Stripe Basil-to-Clover demo and tests
+
+The separate `test-projects/stripe-consumer` Spring Boot application is included in the capstone test path. Its controller tests exercise five unchanged control endpoints and the consumer assumptions affected by five selected Basil-to-Clover changes. The root validation script runs these fixture tests automatically after the main Maven verification.
+
+For a focused live demo, first build the main application, then run these commands from the project root. The first is offline; the next two send live, billable requests. Configure `OPENAI_API_KEY` and `SPRING_AI_MODEL_CHAT=openai` before the live runs.
+
+```powershell
+mvn -Pecj-compiler package
+./test-projects/stripe-consumer/run-dependabot.ps1 -TargetVersion 2025-09-30.clover -Approach offline
+./test-projects/stripe-consumer/run-dependabot.ps1 -TargetVersion 2025-09-30.clover -Approach vanilla-rag
+./test-projects/stripe-consumer/run-dependabot.ps1 -TargetVersion 2025-09-30.clover -Approach react
+```
+
+The live Vanilla RAG and ReAct runs use the same Stripe contract pair, repository, and question, making their evidence and migration recommendations easy to compare. For the full paired evaluation, run `npm run eval`; the Stripe case is part of the shared set and its results contribute to `evaluation/promptfoo/summary.json`.
 
 ## Failure analysis and pivots
 

@@ -3,7 +3,8 @@ param(
     [ValidateSet('2025-08-27.basil', '2025-09-30.clover')]
     [string] $TargetVersion,
     [string] $Question = 'What consumer code is affected by the Stripe API upgrade, and what migration does the release documentation recommend?',
-    [switch] $LiveAnswer
+    [ValidateSet('offline', 'vanilla-rag', 'react')]
+    [string] $Approach = 'offline'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -32,8 +33,9 @@ $argsForApp = @(
     "--question=$Question",
     '--top-k=8'
 )
-if ($LiveAnswer) {
-    $argsForApp += '--answer'
+switch ($Approach) {
+    'vanilla-rag' { $argsForApp += '--answer' }
+    'react' { $argsForApp += '--react' }
 }
 Push-Location $appRoot
 try {

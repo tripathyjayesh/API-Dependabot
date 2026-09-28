@@ -41,7 +41,7 @@ if ($maven) {
     $mavenCommand = $bundledMaven
 }
 
-Write-Host 'Step 1/4: running Maven verify with the portable Eclipse Java compiler profile...'
+Write-Host 'Step 1/5: running API Dependabot Maven verify with the portable Eclipse Java compiler profile...'
 $mavenArguments = @()
 if (-not [string]::IsNullOrWhiteSpace($MavenRepository)) {
     $mavenArguments += "-Dmaven.repo.local=$MavenRepository"
@@ -50,8 +50,18 @@ $mavenArguments += '-Pecj-compiler', 'verify'
 & $mavenCommand @mavenArguments
 if ($LASTEXITCODE -ne 0) { Stop-WithMessage "Maven verify failed with exit code $LASTEXITCODE. Fix that failure before running the model evaluation." }
 
+Write-Host 'Step 2/5: running the Stripe Basil consumer fixture tests...'
+$stripePom = Join-Path $projectRoot 'test-projects\stripe-consumer\pom.xml'
+$stripeArguments = @()
+if (-not [string]::IsNullOrWhiteSpace($MavenRepository)) {
+    $stripeArguments += "-Dmaven.repo.local=$MavenRepository"
+}
+$stripeArguments += '-Dmaven.compiler.fork=true', '-f', $stripePom, 'test'
+& $mavenCommand @stripeArguments
+if ($LASTEXITCODE -ne 0) { Stop-WithMessage "Stripe consumer fixture tests failed with exit code $LASTEXITCODE." }
+
 if (-not [string]::IsNullOrWhiteSpace($GitHubRepository)) {
-    Write-Host 'Step 2/4: checking out and searching the supplied GitHub repository...'
+    Write-Host 'Step 3/5: checking out and searching the supplied GitHub repository...'
     $jar = Join-Path $projectRoot 'target\api-dependabot-0.1.0-SNAPSHOT.jar'
     $oldSpec = Join-Path $projectRoot 'src\test\resources\specs\v1.yaml'
     $newSpec = Join-Path $projectRoot 'src\test\resources\specs\v2-removed-response-property.yaml'
@@ -64,7 +74,7 @@ if (-not [string]::IsNullOrWhiteSpace($GitHubRepository)) {
     }
     Write-Host "GitHub checkout/search passed for $GitHubRepository."
 } else {
-    Write-Host 'Step 2/4: remote GitHub checkout smoke test skipped; pass -GitHubRepository <URL> to run it.'
+    Write-Host 'Step 3/5: remote GitHub checkout smoke test skipped; pass -GitHubRepository <URL> to run it.'
 }
 
 if ($SkipEvaluation) {
@@ -98,11 +108,11 @@ if ([string]::IsNullOrWhiteSpace($env:SPRING_AI_MODEL_CHAT)) {
     $env:SPRING_AI_MODEL_CHAT = 'openai'
 }
 
-Write-Host 'Step 3/4: running the complete shared Vanilla RAG vs ReAct evaluation...'
+Write-Host 'Step 4/5: running the complete shared Vanilla RAG vs ReAct evaluation...'
 & npm run eval
 $evaluationExitCode = $LASTEXITCODE
 
-Write-Host 'Step 4/4: summarizing pass rate, judge scores, latency, and ReAct tool use...'
+Write-Host 'Step 5/5: summarizing pass rate, judge scores, latency, and ReAct tool use...'
 & node 'evaluation/promptfoo/summarize-results.mjs'
 if ($LASTEXITCODE -ne 0) { Stop-WithMessage "Evaluation summary failed with exit code $LASTEXITCODE." }
 
